@@ -14,6 +14,8 @@ else()
   cmake_minimum_required(VERSION 3.0)
 endif()
 
+add_definitions(-std=c++11)
+
 set(QCA_LIB_MAJOR_VERSION "2")
 set(QCA_LIB_MINOR_VERSION "2")
 set(QCA_LIB_PATCH_VERSION "0")
