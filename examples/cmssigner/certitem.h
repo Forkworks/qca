@@ -82,7 +82,7 @@ public:
 		IconPgpSec
 	};
 
-	CertItemStore(QObject *parent = 0);
+	CertItemStore(QObject *parent = nullptr);
 	~CertItemStore();
 
 	int idFromRow(int row) const;
@@ -112,7 +112,7 @@ public:
 	Qt::ItemFlags flags(const QModelIndex &index) const;
 	bool setData(const QModelIndex &index, const QVariant &value, int role);
 
-signals:
+Q_SIGNALS:
 	void addSuccess(int reqId, int id);
 	void addFailed(int reqId);
 
@@ -128,14 +128,14 @@ class CertItemPrivateLoader : public QObject
 {
 	Q_OBJECT
 public:
-	explicit CertItemPrivateLoader(CertItemStore *store, QObject *parent = 0);
+	explicit CertItemPrivateLoader(CertItemStore *store, QObject *parent = nullptr);
 	~CertItemPrivateLoader();
 
 	void start(int id);
 
 	QCA::PrivateKey privateKey() const;
 
-signals:
+Q_SIGNALS:
 	void finished();
 
 private:

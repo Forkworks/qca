@@ -305,7 +305,7 @@ public:
 		endRemoveRows();
 	}
 
-signals:
+Q_SIGNALS:
 	void editFailed(const QModelIndex &index, const QString &reasonString);
 };
 
@@ -537,7 +537,7 @@ public:
 		QCA::saveProviderConfig(providerName);
 	}
 
-private slots:
+private Q_SLOTS:
 	void model_editFailed(const QModelIndex &index, const QString &reasonString)
 	{
 		// if the dialog has already been dismissed, then don't
@@ -546,7 +546,7 @@ private slots:
 			return;
 
 		// show error dialog, and don't allow dimissing the dialog
-		//   during.  we need this, because the the dismiss request
+		//   during.  we need this, because the dismiss request
 		//   can be queued, and end up being invoked during the
 		//   QMessageBox nested eventloop.
 		allow_close = false;

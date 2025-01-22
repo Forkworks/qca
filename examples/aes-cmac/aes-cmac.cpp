@@ -31,15 +31,11 @@
 
 class AESCMACContext : public QCA::MACContext
 {
+    Q_OBJECT
 public:
-    AESCMACContext(QCA::Provider *p) : QCA::MACContext(p, "cmac(aes)")
+    AESCMACContext(QCA::Provider *p) : QCA::MACContext(p, QStringLiteral("cmac(aes)"))
     {
     }
-
-    ~AESCMACContext()
-    {
-    }
-
 
     // Helper to left shift an arbitrary length array
     // This is heavily based on the example in the I-D.
@@ -82,7 +78,7 @@ public:
     }
 
 
-    void setup(const QCA::SymmetricKey &key)
+    void setup(const QCA::SymmetricKey &key) override
     {
 	// We might not have a real key, since this can get called
 	// from the constructor.
@@ -99,7 +95,7 @@ public:
 	m_residual = QCA::SecureArray();
 
 	// Figure 2.2, step 1.
-	QCA::Cipher aesObj(QString("aes128"),
+	QCA::Cipher aesObj(QStringLiteral("aes128"),
 			   QCA::Cipher::ECB, QCA::Cipher::DefaultPadding,
 			   QCA::Encode, key);
 	QCA::SecureArray L = aesObj.process(const_Zero);
@@ -117,24 +113,24 @@ public:
 	    m_k2 = xorArray(leftShift(m_k1), const_Rb);
     }
 
-    QCA::Provider::Context *clone() const
+    QCA::Provider::Context *clone() const override
     {
         return new AESCMACContext(*this);
     }
 
-    void clear()
+    void clear() 
     {
 	setup(m_key);
     }
 
-    QCA::KeyLength keyLength() const
+    QCA::KeyLength keyLength() const override
     {
         return QCA::KeyLength(16, 16, 1);
     }
 
     // This is a bit different to the way the I-D does it,
     // to allow for multiple update() calls.
-    void update(const QCA::MemoryRegion &a)
+    void update(const QCA::MemoryRegion &a) override
     {
 	QCA::SecureArray bytesToProcess = m_residual + a;
 	int blockNum;
@@ -148,7 +144,7 @@ public:
 
 	    m_Y = xorArray(m_X, thisBlock);
 
-	    QCA::Cipher aesObj(QString("aes128"),
+	    QCA::Cipher aesObj(QStringLiteral("aes128"),
 			       QCA::Cipher::ECB, QCA::Cipher::DefaultPadding,
 			       QCA::Encode, m_key);
 	    m_X = aesObj.process(m_Y);
@@ -161,7 +157,7 @@ public:
 	    m_residual[yalv] = bytesToProcess[blockNum*16 + yalv];
     }
 
-    void final( QCA::MemoryRegion *out)
+    void final( QCA::MemoryRegion *out) override
     {
 	QCA::SecureArray lastBlock;
 	int numBytesLeft = m_residual.size();
@@ -176,7 +172,7 @@ public:
 	    lastBlock = xorArray(m_residual, m_k1);
 	}
 	m_Y = xorArray(m_X, lastBlock);
-	QCA::Cipher aesObj(QString("aes128"),
+	QCA::Cipher aesObj(QStringLiteral("aes128"),
 			   QCA::Cipher::ECB, QCA::Cipher::DefaultPadding,
 			   QCA::Encode, m_key);
 	*out = aesObj.process(m_Y);
@@ -202,32 +198,32 @@ protected:
 class ClientSideProvider : public QCA::Provider
 {
 public:
-        int qcaVersion() const
+        int qcaVersion() const override
         {
                 return QCA_VERSION;
         }
 
-        QString name() const
+        QString name() const override
         {
-                return "exampleClientSideProvider";
+                return QStringLiteral("exampleClientSideProvider");
         }
 
-        QStringList features() const
+        QStringList features() const override
         {
                 QStringList list;
-                list += "cmac(aes)";
+                list += QStringLiteral("cmac(aes)");
 		// you can add more features in here, if you have some.
                 return list;
         }
 
-        Provider::Context *createContext(const QString &type)
+        Provider::Context *createContext(const QString &type) override
         {
-	    if(type == "cmac(aes)")
+	    if(type == QLatin1String("cmac(aes)"))
 		return new AESCMACContext(this);
 	    // else if (type == some other feature)
 	    //  return some other context.
 	    else
-		return 0;
+		return nullptr;
         }
 };
 
@@ -240,7 +236,7 @@ class AES_CMAC: public QCA::MessageAuthenticationCode
 public:
     AES_CMAC(const QCA::SymmetricKey &key = QCA::SymmetricKey(),
 	     const QString &provider = QString()):
-	QCA::MessageAuthenticationCode( "cmac(aes)", key, provider)
+	QCA::MessageAuthenticationCode( QStringLiteral("cmac(aes)"), key, provider)
     {}
 };
 
@@ -272,15 +268,15 @@ int main(int argc, char **argv)
 	AES_CMAC cmacObject;
 
 	// create the key
-	QCA::SymmetricKey key(QCA::hexToArray("2b7e151628aed2a6abf7158809cf4f3c"));
+	QCA::SymmetricKey key(QCA::hexToArray(QStringLiteral("2b7e151628aed2a6abf7158809cf4f3c")));
 
 	// set the MAC to use the key
 	cmacObject.setup(key);
 
-	QCA::SecureArray message = QCA::hexToArray("6bc1bee22e409f96e93d7e117393172a"
+	QCA::SecureArray message = QCA::hexToArray(QStringLiteral("6bc1bee22e409f96e93d7e117393172a"
 					       "ae2d8a571e03ac9c9eb76fac45af8e51"
 					       "30c81c46a35ce411e5fbc1191a0a52ef"
-					       "f69f2445df4f9b17ad2b417be66c3710");
+					       "f69f2445df4f9b17ad2b417be66c3710"));
 	QCA::SecureArray message1(message);
 	message1.resize(0);
 	qDebug();
@@ -316,3 +312,4 @@ int main(int argc, char **argv)
     return 0;
 }
 
+#include "aes-cmac.moc"

@@ -34,7 +34,7 @@ class PipeUnitTest : public QObject
 {
   Q_OBJECT
 
-private slots:
+private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
     void createPipeWithInsecureMemory();
@@ -166,7 +166,7 @@ void PipeUnitTest::readWriteSecure()
 
 void PipeUnitTest::signalTests()
 {
-    QCA::QPipe* pipe = new QCA::QPipe;
+    QScopedPointer<QCA::QPipe> pipe(new QCA::QPipe);
     pipe->create();
     
     QVERIFY( pipe->writeEnd().isValid() );
@@ -174,13 +174,13 @@ void PipeUnitTest::signalTests()
     QVERIFY( pipe->readEnd().isValid() );
     pipe->readEnd().enable();
 
-    QSignalSpy readyReadSpy( &(pipe->readEnd()), SIGNAL( readyRead() ) );
+    QSignalSpy readyReadSpy( &(pipe->readEnd()), &QCA::QPipeEnd::readyRead );
     QVERIFY( readyReadSpy.isValid() );
-    QSignalSpy bytesWrittenSpy( &(pipe->writeEnd()), SIGNAL( bytesWritten(int) ) );
+    QSignalSpy bytesWrittenSpy( &(pipe->writeEnd()), &QCA::QPipeEnd::bytesWritten );
     QVERIFY( bytesWrittenSpy.isValid() );
-    QSignalSpy closedWriteSpy( &(pipe->writeEnd()), SIGNAL( closed() ) );
+    QSignalSpy closedWriteSpy( &(pipe->writeEnd()), &QCA::QPipeEnd::closed );
     QVERIFY( closedWriteSpy.isValid() );
-    QSignalSpy closedReadSpy( &(pipe->readEnd()), SIGNAL( closed() ) );
+    QSignalSpy closedReadSpy( &(pipe->readEnd()), &QCA::QPipeEnd::closed );
     QVERIFY( closedReadSpy.isValid() );
 
     QCOMPARE( readyReadSpy.count(), 0 );
@@ -213,7 +213,7 @@ void PipeUnitTest::signalTests()
 
 void PipeUnitTest::signalTestsSecure()
 {
-    QCA::QPipe* pipe = new QCA::QPipe;
+    QScopedPointer<QCA::QPipe> pipe(new QCA::QPipe);
     pipe->create(true);
     
     QVERIFY( pipe->writeEnd().isValid() );
@@ -221,13 +221,13 @@ void PipeUnitTest::signalTestsSecure()
     QVERIFY( pipe->readEnd().isValid() );
     pipe->readEnd().enable();
 
-    QSignalSpy readyReadSpy( &(pipe->readEnd()), SIGNAL( readyRead() ) );
+    QSignalSpy readyReadSpy( &(pipe->readEnd()), &QCA::QPipeEnd::readyRead );
     QVERIFY( readyReadSpy.isValid() );
-    QSignalSpy bytesWrittenSpy( &(pipe->writeEnd()), SIGNAL( bytesWritten(int) ) );
+    QSignalSpy bytesWrittenSpy( &(pipe->writeEnd()), &QCA::QPipeEnd::bytesWritten );
     QVERIFY( bytesWrittenSpy.isValid() );
-    QSignalSpy closedWriteSpy( &(pipe->writeEnd()), SIGNAL( closed() ) );
+    QSignalSpy closedWriteSpy( &(pipe->writeEnd()), &QCA::QPipeEnd::closed );
     QVERIFY( closedWriteSpy.isValid() );
-    QSignalSpy closedReadSpy( &(pipe->readEnd()), SIGNAL( closed() ) );
+    QSignalSpy closedReadSpy( &(pipe->readEnd()), &QCA::QPipeEnd::closed );
     QVERIFY( closedReadSpy.isValid() );
 
     QCOMPARE( readyReadSpy.count(), 0 );

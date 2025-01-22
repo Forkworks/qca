@@ -79,22 +79,22 @@ public:
     SecureServer(quint16 _port) : port(_port)
     {
 	server = new QTcpServer;
-	connect( server, SIGNAL(newConnection()), SLOT(server_handleConnection()) );
+	connect( server, &QTcpServer::newConnection, this, &SecureServer::server_handleConnection );
 
 	ssl = new QCA::TLS;
-	connect(ssl, SIGNAL(handshaken()), SLOT(ssl_handshaken()));
-	connect(ssl, SIGNAL(readyRead()), SLOT(ssl_readyRead()));
-	connect(ssl, SIGNAL(readyReadOutgoing()), SLOT(ssl_readyReadOutgoing()));
-	connect(ssl, SIGNAL(closed()), SLOT(ssl_closed()));
-	connect(ssl, SIGNAL(error()), SLOT(ssl_error()));
+	connect(ssl, &QCA::TLS::handshaken, this, &SecureServer::ssl_handshaken);
+	connect(ssl, &QCA::TLS::readyRead, this, &SecureServer::ssl_readyRead);
+	connect(ssl, &QCA::TLS::readyReadOutgoing, this, &SecureServer::ssl_readyReadOutgoing);
+	connect(ssl, &QCA::TLS::closed, this, &SecureServer::ssl_closed);
+	connect(ssl, &QCA::TLS::error, this, &SecureServer::ssl_error);
 
-	cert = QCA::Certificate::fromPEM(pemdata_cert);
-	privkey = QCA::PrivateKey::fromPEM(pemdata_privkey);
+	cert = QCA::Certificate::fromPEM(QString::fromLatin1(pemdata_cert));
+	privkey = QCA::PrivateKey::fromPEM(QString::fromLatin1(pemdata_privkey));
 
 	mode = Idle;
     }
 
-    ~SecureServer()
+    ~SecureServer() override
     {
 	delete ssl;
 	delete server;
@@ -104,26 +104,26 @@ public:
     {
 	if(cert.isNull()) {
 	    qDebug() << "Error loading cert!";
-	    QTimer::singleShot(0, this, SIGNAL(quit()));
+	    QTimer::singleShot(0, this, &SecureServer::quit);
 	    return;
 	}
 	if(privkey.isNull()) {
 	    qDebug() << "Error loading private key!";
-	    QTimer::singleShot(0, this, SIGNAL(quit()));
+	    QTimer::singleShot(0, this, &SecureServer::quit);
 	    return;
 	}
 	if(false == server->listen(QHostAddress::Any, port)) {
 	    qDebug() << "Error binding to port " << port;
-	    QTimer::singleShot(0, this, SIGNAL(quit()));
+	    QTimer::singleShot(0, this, &SecureServer::quit);
 	    return;
 	}
 	qDebug() << "Listening on port" << port;
     }
 
-signals:
+Q_SIGNALS:
     void quit();
 
-private slots:
+private Q_SLOTS:
     void sock_readyRead()
     {
 	QByteArray buf(sock->bytesAvailable(), 0x00);
@@ -145,17 +145,16 @@ private slots:
 	if(mode != Idle) {
 	    QTcpSocket* tmp = server->nextPendingConnection();
 	    tmp->close();
-	    connect(tmp, SIGNAL(disconnected()), tmp, SLOT(deleteLater()));
+	    connect(tmp, &QTcpSocket::disconnected, tmp, &QTcpSocket::deleteLater);
 	    qDebug() << "throwing away extra connection";
 	    return;
 	}
 	mode = Handshaking;
 	sock = server->nextPendingConnection();
-	connect(sock, SIGNAL(readyRead()), SLOT(sock_readyRead()));
-	connect(sock, SIGNAL(disconnected()), SLOT(sock_disconnected()));
-	connect(sock, SIGNAL(error(QAbstractSocket::SocketError)),
-		SLOT(sock_error(QAbstractSocket::SocketError)));
-	connect(sock, SIGNAL(bytesWritten(qint64)), SLOT(sock_bytesWritten(qint64)));
+	connect(sock, &QTcpSocket::readyRead, this, &SecureServer::sock_readyRead);
+	connect(sock, &QTcpSocket::disconnected, this, &SecureServer::sock_disconnected);
+	connect(sock, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::error), this, &SecureServer::sock_error);
+	connect(sock, &QTcpSocket::bytesWritten, this, &SecureServer::sock_bytesWritten);
 
 	qDebug() << "Connection received!  Starting TLS handshake.";
 	ssl->setCertificate(cert, privkey);
@@ -197,7 +196,7 @@ private slots:
 
     void ssl_readyRead()
     {
-	QByteArray a = ssl->read();
+	ssl->read();
 	QByteArray b =
 	    "<html>\n"
 	    "<head><title>Test</title></head>\n"
@@ -256,7 +255,7 @@ int main(int argc, char **argv)
     QCA::Initializer init;
 
     QCoreApplication app(argc, argv);
-    int port = argc > 1 ? QString(argv[1]).toInt() : 8000;
+    int port = argc > 1 ? QString::fromLatin1(argv[1]).toInt() : 8000;
 
     if(!QCA::isSupported("tls")) {
 	qDebug() << "TLS not supported!";
@@ -264,7 +263,7 @@ int main(int argc, char **argv)
     }
 
     SecureServer *server = new SecureServer(port);
-    QObject::connect(server, SIGNAL(quit()), &app, SLOT(quit()));
+    QObject::connect(server, &SecureServer::quit, &app, &QCoreApplication::quit);
     server->start();
     app.exec();
     delete server;

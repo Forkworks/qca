@@ -24,6 +24,7 @@
 #include <QtCrypto>
 
 #include <QCoreApplication>
+#include <QFile>
 
 #include <iostream>
 
@@ -34,7 +35,7 @@
 // dump out information about some part of the certificate
 // we use this same approach for information about the subject
 // of the certificate, and also about the issuer of the certificate
-static void dumpCertificateInfo( QCA::CertificateInfo info)
+static void dumpCertificateInfo( const QCA::CertificateInfo &info)
 {
     std::cout << "  Organization: " << std::endl;
 
@@ -55,13 +56,13 @@ static void dumpCertificateInfo( QCA::CertificateInfo info)
     std::cout << "  Country: " << std::endl;
     // As above, however this shows a more compact way to represent
     // the iteration and output.
-    foreach( QString country, info.values(QCA::Country) ) {
+    foreach( QString country, info.values(QCA::Country) ) {  //clazy:exclude=container-anti-pattern
 	std::cout << "    " << qPrintable(country) << std::endl;
     }
 }
 
 // This is just a convenience routine
-static void dumpSubjectInfo( QCA::CertificateInfo subject)
+static void dumpSubjectInfo( const QCA::CertificateInfo &subject)
 {
     std::cout << "Subject: " << std::endl;
 
@@ -70,7 +71,7 @@ static void dumpSubjectInfo( QCA::CertificateInfo subject)
 
 
 // This is just a convenience routine
-static void dumpIssuerInfo( QCA::CertificateInfo issuer)
+static void dumpIssuerInfo( const QCA::CertificateInfo &issuer)
 {
     std::cout << "Issuer: " << std::endl;
 
@@ -108,7 +109,7 @@ int main(int argc, char** argv)
 	QCA::ConvertResult importResult;
 	// This imports all the PEM encoded certificates from the file specified as the argument
 	// Note that you pass in a pointer to the result argument.
-	filecerts = QCA::CertificateCollection::fromFlatTextFile( argv[1], &importResult );
+	filecerts = QCA::CertificateCollection::fromFlatTextFile( QFile::decodeName(argv[1]), &importResult );
 	if ( QCA::ConvertGood == importResult) {
 	    std::cout << "Import succeeded" << std::endl;
 	    // this turns the CertificateCollection into a QList of Certificate objects

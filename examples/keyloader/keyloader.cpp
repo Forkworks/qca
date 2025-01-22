@@ -23,9 +23,10 @@
 #include <QtCrypto>
 
 #include <QCoreApplication>
+#include <QFile>
 #include <QTimer>
 
-#include <stdio.h>
+#include <cstdio>
 
 #ifdef QT_STATICPLUGIN
 #include "import_plugins.h"
@@ -37,21 +38,20 @@ class PassphraseHandler: public QObject
 public:
 	QCA::EventHandler handler;
 
-	PassphraseHandler(QObject *parent = 0) : QObject(parent)
+	PassphraseHandler(QObject *parent = nullptr) : QObject(parent)
 	{
-		connect(&handler, SIGNAL(eventReady(int, const QCA::Event &)),
-			SLOT(eh_eventReady(int, const QCA::Event &)));
+		connect(&handler, &QCA::EventHandler::eventReady, this, &PassphraseHandler::eh_eventReady);
 		handler.start();
 	}
 
-private slots:
+private Q_SLOTS:
 	void eh_eventReady(int id, const QCA::Event &event)
 	{
 		if(event.type() == QCA::Event::Password)
 		{
 			QCA::SecureArray pass;
 			QCA::ConsolePrompt prompt;
-			prompt.getHidden("Passphrase");
+			prompt.getHidden(QStringLiteral("Passphrase"));
 			prompt.waitForFinished();
 			pass = prompt.result();
 			handler.submitPassword(id, pass);
@@ -70,19 +70,19 @@ public:
 
 	App()
 	{
-		connect(&keyLoader, SIGNAL(finished()), SLOT(kl_finished()));
+		connect(&keyLoader, &QCA::KeyLoader::finished, this, &App::kl_finished);
 	}
 
-public slots:
+public Q_SLOTS:
 	void start()
 	{
 		keyLoader.loadPrivateKeyFromPEMFile(str);
 	}
 
-signals:
+Q_SIGNALS:
 	void quit();
 
-private slots:
+private Q_SLOTS:
 	void kl_finished()
 	{
 		if(keyLoader.convertResult() == QCA::ConvertGood)
@@ -110,9 +110,9 @@ int main(int argc, char **argv)
 
 	PassphraseHandler passphraseHandler;
 	App app;
-	app.str = argv[1];
-	QObject::connect(&app, SIGNAL(quit()), &qapp, SLOT(quit()));
-	QTimer::singleShot(0, &app, SLOT(start()));
+	app.str = QFile::decodeName(argv[1]);
+	QObject::connect(&app, &App::quit, &qapp, QCoreApplication::quit);
+	QTimer::singleShot(0, &app, &App::start);
 	qapp.exec();
 	return 0;
 }

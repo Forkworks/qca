@@ -25,49 +25,27 @@
 // NOTE: this API is private to QCA
 
 #include <QSocketNotifier>
-#include <stdio.h>
+#include <cstdio>
 
 namespace QCA {
-
-// This function performs the following steps:
-//   obj->disconnect(owner); // to prevent future signals to owner
-//   obj->setParent(0);      // to prevent delete if parent is deleted
-//   obj->deleteLater();     // now we can forget about the object
-inline void releaseAndDeleteLater(QObject *owner, QObject *obj)
-{
-	obj->disconnect(owner);
-	obj->setParent(0);
-	obj->deleteLater();
-}
-
-
 
 class SafeSocketNotifier : public QObject
 {
 	Q_OBJECT
 public:
 	SafeSocketNotifier(int socket, QSocketNotifier::Type type,
-		QObject *parent = 0) :
-		QObject(parent)
-	{
-		sn = new QSocketNotifier(socket, type, this);
-		connect(sn, SIGNAL(activated(int)), SIGNAL(activated(int)));
-	}
+		QObject *parent = nullptr);
 
-	~SafeSocketNotifier()
-	{
-		sn->setEnabled(false);
-		releaseAndDeleteLater(this, sn);
-	}
+	~SafeSocketNotifier() override;
 
 	bool isEnabled() const             { return sn->isEnabled(); }
 	int socket() const                 { return sn->socket(); }
 	QSocketNotifier::Type type() const { return sn->type(); }
 
-public slots:
+public Q_SLOTS:
 	void setEnabled(bool enable)       { sn->setEnabled(enable); }
 
-signals:
+Q_SIGNALS:
 	void activated(int socket);
 
 private:

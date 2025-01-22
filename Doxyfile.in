@@ -567,7 +567,7 @@ EXAMPLE_RECURSIVE      = NO
 # directories that contain image that are included in the documentation (see 
 # the \image command).
 
-IMAGE_PATH             = @CMAKE_SOURCE_DIR@/images
+IMAGE_PATH             = @CMAKE_SOURCE_DIR@/docs/pics
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should 
 # invoke to filter for each input file. Doxygen will invoke the filter program 
@@ -1070,7 +1070,7 @@ PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS \
 # The macro definition that is found in the sources will be used. 
 # Use the PREDEFINED tag if you want to use a different macro definition.
 
-EXPAND_AS_DEFINED      = QCA_EXPORT
+EXPAND_AS_DEFINED      = QCA_EXPORT QCA_NOEXCEPT
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES (the default) then 
 # doxygen's preprocessor will remove all function-like macros that are alone 

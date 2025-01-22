@@ -21,10 +21,10 @@
 */
 
 #include <QCoreApplication>
-#include <QTimer>
-#include <QTcpSocket>
 #include <QTcpServer>
-#include <stdio.h>
+#include <QTcpSocket>
+#include <QTimer>
+#include <cstdio>
 
 // QtCrypto has the declarations for all of QCA
 #include <QtCrypto>
@@ -39,29 +39,29 @@ static QString socketErrorToString(QAbstractSocket::SocketError x)
 	switch(x)
 	{
 		case QAbstractSocket::ConnectionRefusedError:
-			s = "connection refused or timed out"; break;
+			s = QStringLiteral("connection refused or timed out"); break;
 		case QAbstractSocket::RemoteHostClosedError:
-			s = "remote host closed the connection"; break;
+			s = QStringLiteral("remote host closed the connection"); break;
 		case QAbstractSocket::HostNotFoundError:
-			s = "host not found"; break;
+			s = QStringLiteral("host not found"); break;
 		case QAbstractSocket::SocketAccessError:
-			s = "access error"; break;
+			s = QStringLiteral("access error"); break;
 		case QAbstractSocket::SocketResourceError:
-			s = "too many sockets"; break;
+			s = QStringLiteral("too many sockets"); break;
 		case QAbstractSocket::SocketTimeoutError:
-			s = "operation timed out"; break;
+			s = QStringLiteral("operation timed out"); break;
 		case QAbstractSocket::DatagramTooLargeError:
-			s = "datagram was larger than system limit"; break;
+			s = QStringLiteral("datagram was larger than system limit"); break;
 		case QAbstractSocket::NetworkError:
-			s = "network error"; break;
+			s = QStringLiteral("network error"); break;
 		case QAbstractSocket::AddressInUseError:
-			s = "address is already in use"; break;
+			s = QStringLiteral("address is already in use"); break;
 		case QAbstractSocket::SocketAddressNotAvailableError:
-			s = "address does not belong to the host"; break;
+			s = QStringLiteral("address does not belong to the host"); break;
 		case QAbstractSocket::UnsupportedSocketOperationError:
-			s = "operation is not supported by the local operating system"; break;
+			s = QStringLiteral("operation is not supported by the local operating system"); break;
 		default:
-			s = "unknown socket error"; break;
+			s = QStringLiteral("unknown socket error"); break;
 	}
 	return s;
 }
@@ -72,28 +72,28 @@ static QString saslAuthConditionToString(QCA::SASL::AuthCondition x)
 	switch(x)
 	{
 		case QCA::SASL::NoMechanism:
-			s = "no appropriate mechanism could be negotiated"; break;
+			s = QStringLiteral("no appropriate mechanism could be negotiated"); break;
 		case QCA::SASL::BadProtocol:
-			s = "bad SASL protocol"; break;
+			s = QStringLiteral("bad SASL protocol"); break;
 		case QCA::SASL::BadAuth:
-			s = "authentication failed"; break;
+			s = QStringLiteral("authentication failed"); break;
 		case QCA::SASL::NoAuthzid:
-			s = "authorization failed"; break;
+			s = QStringLiteral("authorization failed"); break;
 		case QCA::SASL::TooWeak:
-			s = "mechanism too weak for this user"; break;
+			s = QStringLiteral("mechanism too weak for this user"); break;
 		case QCA::SASL::NeedEncrypt:
-			s = "encryption is needed to use this mechanism"; break;
+			s = QStringLiteral("encryption is needed to use this mechanism"); break;
 		case QCA::SASL::Expired:
-			s = "passphrase expired"; break;
+			s = QStringLiteral("passphrase expired"); break;
 		case QCA::SASL::Disabled:
-			s = "account is disabled"; break;
+			s = QStringLiteral("account is disabled"); break;
 		case QCA::SASL::NoUser:
-			s = "user not found"; break;
+			s = QStringLiteral("user not found"); break;
 		case QCA::SASL::RemoteUnavailable:
-			s = "needed remote service is unavailable"; break;
+			s = QStringLiteral("needed remote service is unavailable"); break;
 		// AuthFail or unknown (including those defined for client only)
 		default:
-			s = "generic authentication failure"; break;
+			s = QStringLiteral("generic authentication failure"); break;
 	};
 	return s;
 }
@@ -116,13 +116,13 @@ public:
 	int reserveId();
 	void releaseId(int id);
 
-public slots:
+public Q_SLOTS:
 	void start();
 
-signals:
+Q_SIGNALS:
 	void quit();
 
-private slots:
+private Q_SLOTS:
 	void server_newConnection();
 };
 
@@ -153,19 +153,19 @@ public:
 		id = serverTest->reserveId();
 
 		sock->setParent(this);
-		connect(sock, SIGNAL(disconnected()), SLOT(sock_disconnected()));
-		connect(sock, SIGNAL(readyRead()), SLOT(sock_readyRead()));
-		connect(sock, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(sock_error(QAbstractSocket::SocketError)));
-		connect(sock, SIGNAL(bytesWritten(qint64)), SLOT(sock_bytesWritten(qint64)));
+		connect(sock, &QTcpSocket::disconnected, this, &ServerTestHandler::sock_disconnected);
+		connect(sock, &QTcpSocket::readyRead, this, &ServerTestHandler::sock_readyRead);
+		connect(sock, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::error), this, &ServerTestHandler::sock_error);
+		connect(sock, &QTcpSocket::bytesWritten, this, &ServerTestHandler::sock_bytesWritten);
 
 		sasl = new QCA::SASL(this);
-		connect(sasl, SIGNAL(authCheck(const QString &, const QString &)), SLOT(sasl_authCheck(const QString &, const QString &)));
-		connect(sasl, SIGNAL(nextStep(const QByteArray &)), SLOT(sasl_nextStep(const QByteArray &)));
-		connect(sasl, SIGNAL(authenticated()), SLOT(sasl_authenticated()));
-		connect(sasl, SIGNAL(readyRead()), SLOT(sasl_readyRead()));
-		connect(sasl, SIGNAL(readyReadOutgoing()), SLOT(sasl_readyReadOutgoing()));
-		connect(sasl, SIGNAL(error()), SLOT(sasl_error()));
-		connect(sasl, SIGNAL(serverStarted()), SLOT(sasl_serverStarted()));
+		connect(sasl, &QCA::SASL::authCheck, this, &ServerTestHandler::sasl_authCheck);
+		connect(sasl, &QCA::SASL::nextStep, this, &ServerTestHandler::sasl_nextStep);
+		connect(sasl, &QCA::SASL::authenticated, this, &ServerTestHandler::sasl_authenticated);
+		connect(sasl, &QCA::SASL::readyRead, this, &ServerTestHandler::sasl_readyRead);
+		connect(sasl, &QCA::SASL::readyReadOutgoing, this, &ServerTestHandler::sasl_readyReadOutgoing);
+		connect(sasl, &QCA::SASL::error, this, &ServerTestHandler::sasl_error);
+		connect(sasl, &QCA::SASL::serverStarted, this, &ServerTestHandler::sasl_serverStarted);
 
 		mode = 0; // mech list mode
 		toWrite = 0;
@@ -179,15 +179,15 @@ public:
 		sasl->startServer(proto, host, realm);
 	}
 
-	~ServerTestHandler()
+	~ServerTestHandler() override
 	{
 		serverTest->releaseId(id);
 	}
 
-private slots:
+private Q_SLOTS:
 	void sasl_serverStarted()
 	{
-		sendLine(sasl->mechanismList().join(" "));
+		sendLine(sasl->mechanismList().join(QStringLiteral(" ")));
 	}
 
 	void sock_disconnected()
@@ -213,7 +213,7 @@ private slots:
 	{
 		if(sock->canReadLine())
 		{
-			QString line = sock->readLine();
+			QString line = QString::fromLatin1(sock->readLine());
 			line.truncate(line.length() - 1); // chop the newline
 			handleLine(line);
 		}
@@ -234,10 +234,10 @@ private slots:
 
 	void sasl_nextStep(const QByteArray &stepData)
 	{
-		QString line = "C";
+		QString line = QStringLiteral("C");
 		if(!stepData.isEmpty())
 		{
-			line += ',';
+			line += QLatin1Char(',');
 			line += arrayToString(stepData);
 		}
 		sendLine(line);
@@ -263,7 +263,7 @@ private slots:
 
 	void sasl_authenticated()
 	{
-		sendLine("A");
+		sendLine(QStringLiteral("A"));
 		printf("%d: Authentication success.\n", id);
 		mode = 2; // switch to app mode
 		printf("%d: SSF: %d\n", id, sasl->ssf());
@@ -291,7 +291,7 @@ private slots:
 		else if(e == QCA::SASL::ErrorHandshake)
 		{
 			QString errstr = saslAuthConditionToString(sasl->authCondition());
-			sendLine(QString("E,") + errstr);
+			sendLine(QStringLiteral("E,") + errstr);
 			printf("%d: Error: sasl: %s.\n", id, qPrintable(errstr));
 		}
 		else if(e == QCA::SASL::ErrorCrypt)
@@ -317,11 +317,11 @@ private:
 		printf("%d: Reading: [%s]\n", id, qPrintable(line));
 		if(mode == 0)
 		{
-			int n = line.indexOf(' ');
+			int n = line.indexOf(QLatin1Char(' '));
 			if(n != -1)
 			{
 				QString mech = line.mid(0, n);
-				QString rest = line.mid(n + 1).toUtf8();
+				QString rest = QString::fromLatin1(line.mid(n + 1).toUtf8());
 				sasl->putServerFirstStep(mech, stringToArray(rest));
 			}
 			else
@@ -331,7 +331,7 @@ private:
 		else if(mode == 1)
 		{
 			QString type, rest;
-			int n = line.indexOf(',');
+			int n = line.indexOf(QLatin1Char(','));
 			if(n != -1)
 			{
 				type = line.mid(0, n);
@@ -340,10 +340,10 @@ private:
 			else
 			{
 				type = line;
-				rest = "";
+				rest = QLatin1String("");
 			}
 
-			if(type == "C")
+			if(type == QLatin1String("C"))
 			{
 				sasl->putStep(stringToArray(rest));
 			}
@@ -371,7 +371,7 @@ private:
 	void sendLine(const QString &line)
 	{
 		printf("%d: Writing: {%s}\n", id, qPrintable(line));
-		QString s = line + '\n';
+		QString s = line + QLatin1Char('\n');
 		QByteArray a = s.toUtf8();
 		if(mode == 2) // app mode
 		{
@@ -393,7 +393,7 @@ ServerTest::ServerTest(const QString &_host, int _port, const QString &_proto, c
 	port(_port)
 {
 	tcpServer = new QTcpServer(this);
-	connect(tcpServer, SIGNAL(newConnection()), SLOT(server_newConnection()));
+	connect(tcpServer, &QTcpServer::newConnection, this, &ServerTest::server_newConnection);
 }
 
 int ServerTest::reserveId()
@@ -441,22 +441,22 @@ int main(int argc, char **argv)
 	QCA::Initializer init;
 	QCoreApplication qapp(argc, argv);
 
-	QCA::setAppName("saslserver");
+	QCA::setAppName(QStringLiteral("saslserver"));
 
 	QStringList args = qapp.arguments();
 	args.removeFirst();
 
 	// options
-	QString proto = "qcatest"; // default protocol
+	QString proto = QStringLiteral("qcatest"); // default protocol
 	QString realm;
 	for(int n = 0; n < args.count(); ++n)
 	{
-		if(!args[n].startsWith("--"))
+		if(!args[n].startsWith(QLatin1String("--")))
 			continue;
 
 		QString opt = args[n].mid(2);
 		QString var, val;
-		int at = opt.indexOf('=');
+		int at = opt.indexOf(QLatin1Char('='));
 		if(at != -1)
 		{
 			var = opt.mid(0, at);
@@ -465,9 +465,9 @@ int main(int argc, char **argv)
 		else
 			var = opt;
 
-		if(var == "proto")
+		if(var == QLatin1String("proto"))
 			proto = val;
-		else if(var == "realm")
+		else if(var == QLatin1String("realm"))
 			realm = val;
 
 		args.removeAt(n);
@@ -484,15 +484,15 @@ int main(int argc, char **argv)
 	int port = 8001; // default port
 
 	QString hostinput = args[0];
-	QString str = "Hello, World";
+	QString str = QStringLiteral("Hello, World");
 	if(args.count() >= 2)
 		str = args[1];
 
-	int at = hostinput.indexOf(':');
+	int at = hostinput.indexOf(QLatin1Char(':'));
 	if(at != -1)
 	{
 		host = hostinput.mid(0, at);
-		port = hostinput.mid(at + 1).toInt();
+		port = hostinput.midRef(at + 1).toInt();
 	}
 	else
 		host = hostinput;
@@ -504,8 +504,8 @@ int main(int argc, char **argv)
 	}
 
 	ServerTest server(host, port, proto, realm, str);
-	QObject::connect(&server, SIGNAL(quit()), &qapp, SLOT(quit()));
-	QTimer::singleShot(0, &server, SLOT(start()));
+	QObject::connect(&server, &ServerTest::quit, &qapp, &QCoreApplication::quit);
+	QTimer::singleShot(0, &server, &ServerTest::start);
 	qapp.exec();
 
 	return 0;

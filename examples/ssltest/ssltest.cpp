@@ -61,41 +61,41 @@ static QString validityToString(QCA::Validity v)
 	switch(v)
 	{
 		case QCA::ValidityGood:
-			s = "Validated";
+			s = QStringLiteral("Validated");
 			break;
 		case QCA::ErrorRejected:
-			s = "Root CA is marked to reject the specified purpose";
+			s = QStringLiteral("Root CA is marked to reject the specified purpose");
 			break;
 		case QCA::ErrorUntrusted:
-			s = "Certificate not trusted for the required purpose";
+			s = QStringLiteral("Certificate not trusted for the required purpose");
 			break;
 		case QCA::ErrorSignatureFailed:
-			s = "Invalid signature";
+			s = QStringLiteral("Invalid signature");
 			break;
 		case QCA::ErrorInvalidCA:
-			s = "Invalid CA certificate";
+			s = QStringLiteral("Invalid CA certificate");
 			break;
 		case QCA::ErrorInvalidPurpose:
-			s = "Invalid certificate purpose";
+			s = QStringLiteral("Invalid certificate purpose");
 			break;
 		case QCA::ErrorSelfSigned:
-			s = "Certificate is self-signed";
+			s = QStringLiteral("Certificate is self-signed");
 			break;
 		case QCA::ErrorRevoked:
-			s = "Certificate has been revoked";
+			s = QStringLiteral("Certificate has been revoked");
 			break;
 		case QCA::ErrorPathLengthExceeded:
-			s = "Maximum certificate chain length exceeded";
+			s = QStringLiteral("Maximum certificate chain length exceeded");
 			break;
 		case QCA::ErrorExpired:
-			s = "Certificate has expired";
+			s = QStringLiteral("Certificate has expired");
 			break;
 		case QCA::ErrorExpiredCA:
-			s = "CA has expired";
+			s = QStringLiteral("CA has expired");
 			break;
 		case QCA::ErrorValidityUnknown:
 		default:
-			s = "General certificate validation error";
+			s = QStringLiteral("General certificate validation error");
 			break;
 	}
 	return s;
@@ -111,22 +111,20 @@ public:
 		ssl_done = false;
 
 		sock = new QTcpSocket;
-		connect(sock, SIGNAL(connected()), SLOT(sock_connected()));
-		connect(sock, SIGNAL(readyRead()), SLOT(sock_readyRead()));
-		connect(sock, SIGNAL(error(QAbstractSocket::SocketError)),
-			SLOT(sock_error(QAbstractSocket::SocketError)));
+		connect(sock, &QTcpSocket::connected, this, &SecureTest::sock_connected);
+		connect(sock, &QTcpSocket::readyRead, this, &SecureTest::sock_readyRead);
+		connect(sock, QOverload<QAbstractSocket::SocketError>::of(&QTcpSocket::error), this, &SecureTest::sock_error);
 
 		ssl = new QCA::TLS;
-		connect(ssl, SIGNAL(certificateRequested()), SLOT(ssl_certificateRequested()));
-		connect(ssl, SIGNAL(handshaken()), SLOT(ssl_handshaken()));
-		connect(ssl, SIGNAL(readyRead()), SLOT(ssl_readyRead()));
-		connect(ssl, SIGNAL(readyReadOutgoing()),
-			SLOT(ssl_readyReadOutgoing()));
-		connect(ssl, SIGNAL(closed()), SLOT(ssl_closed()));
-		connect(ssl, SIGNAL(error()), SLOT(ssl_error()));
+		connect(ssl, &QCA::TLS::certificateRequested, this, &SecureTest::ssl_certificateRequested);
+		connect(ssl, &QCA::TLS::handshaken, this, &SecureTest::ssl_handshaken);
+		connect(ssl, &QCA::TLS::readyRead, this, &SecureTest::ssl_readyRead);
+		connect(ssl, &QCA::TLS::readyReadOutgoing, this, &SecureTest::ssl_readyReadOutgoing);
+		connect(ssl, &QCA::TLS::closed, this, &SecureTest::ssl_closed);
+		connect(ssl, &QCA::TLS::error, this, &SecureTest::ssl_error);
 	}
 
-	~SecureTest()
+	~SecureTest() override
 	{
 		delete ssl;
 		delete sock;
@@ -134,12 +132,12 @@ public:
 
 	void start(const QString &_host)
 	{
-		int n = _host.indexOf(':');
+		int n = _host.indexOf(QLatin1Char(':'));
 		int port;
 		if(n != -1)
 		{
 			host = _host.mid(0, n);
-			port = _host.mid(n+1).toInt();
+			port = _host.midRef(n+1).toInt();
 		}
 		else
 		{
@@ -151,10 +149,10 @@ public:
 		sock->connectToHost(host, port);
 	}
 
-signals:
+Q_SIGNALS:
 	void quit();
 
-private slots:
+private Q_SLOTS:
 	void sock_connected()
 	{
 		// We just do this to help doxygen...
@@ -166,7 +164,7 @@ private slots:
 
 		// We add this one to show how, and to make it work with
 		// the server example.
-		rootCerts.addCertificate(QCA::Certificate::fromPEM(exampleCA_cert));
+		rootCerts.addCertificate(QCA::Certificate::fromPEM(QString::fromLatin1(exampleCA_cert)));
 
 		if(!QCA::haveSystemStore())
 			printf("Warning: no root certs\n");
@@ -223,22 +221,22 @@ private slots:
 				showCertInfo(cert);
 		}
 
-		QString str = "Peer Identity: ";
+		QString str = QStringLiteral("Peer Identity: ");
 		if(r == QCA::TLS::Valid)
-			str += "Valid";
+			str += QStringLiteral("Valid");
 		else if(r == QCA::TLS::HostMismatch)
-			str += "Error: Wrong certificate";
+			str += QStringLiteral("Error: Wrong certificate");
 		else if(r == QCA::TLS::InvalidCertificate)
-			str += "Error: Invalid certificate.\n -> Reason: " +
+			str += QStringLiteral("Error: Invalid certificate.\n -> Reason: ") +
 				validityToString(ssl->peerCertificateValidity());
 		else
-			str += "Error: No certificate";
+			str += QStringLiteral("Error: No certificate");
 		printf("%s\n", qPrintable(str));
 
 		ssl->continueAfterStep();
 
 		printf("Let's try a GET request now.\n");
-		QString req = "GET / HTTP/1.0\nHost: " + host + "\n\n";
+		QString req = QStringLiteral("GET / HTTP/1.0\nHost: ") + host + QStringLiteral("\n\n");
 		ssl->write(req.toLatin1());
 	}
 
@@ -318,7 +316,7 @@ int main(int argc, char **argv)
 	QCA::Initializer init;
 
 	QCoreApplication app(argc, argv);
-	QString host = argc > 1 ? argv[1] : "andbit.net";
+	QString host = argc > 1 ? QString::fromLocal8Bit(argv[1]) : QStringLiteral("andbit.net");
 
 	if(!QCA::isSupported("tls"))
 	{
@@ -327,7 +325,7 @@ int main(int argc, char **argv)
 	}
 
 	SecureTest *s = new SecureTest;
-	QObject::connect(s, SIGNAL(quit()), &app, SLOT(quit()));
+	QObject::connect(s, &SecureTest::quit, &app, &QCoreApplication::quit);
 	s->start(host);
 	app.exec();
 	delete s;

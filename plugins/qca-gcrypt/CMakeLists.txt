@@ -1,8 +1,8 @@
 if(WITH_gcrypt_PLUGIN STREQUAL "yes")
   find_package(LibGcrypt REQUIRED)
-else(WITH_gcrypt_PLUGIN STREQUAL "yes")
+else()
   find_package(LibGcrypt)
-endif(WITH_gcrypt_PLUGIN STREQUAL "yes")
+endif()
 
 if(LIBGCRYPT_FOUND)
   include(CheckTypeSize)
@@ -19,14 +19,13 @@ if(LIBGCRYPT_FOUND)
 
     set(QCA_GCRYPT_SOURCES qca-gcrypt.cpp)
     add_definitions(${LIBGCRYPT_CFLAGS})
-    my_automoc(QCA_GCRYPT_SOURCES)
     add_library(qca-gcrypt ${PLUGIN_TYPE} ${QCA_GCRYPT_SOURCES})
 
     if(APPLE AND ${PLUGIN_TYPE} STREQUAL "MODULE")
       set_property(TARGET qca-gcrypt PROPERTY SUFFIX ".dylib")
     endif()
 
-    target_link_libraries(qca-gcrypt ${QT_QTCORE_LIBRARY} ${QCA_LIB_NAME} ${LIBGCRYPT_LIBRARIES})
+    target_link_libraries(qca-gcrypt Qt5::Core ${QCA_LIB_NAME} ${LIBGCRYPT_LIBRARIES})
 
     if(NOT DEVELOPER_MODE)
       install(TARGETS qca-gcrypt
@@ -36,10 +35,10 @@ if(LIBGCRYPT_FOUND)
 
       install_pdb(qca-gcrypt ${QCA_CRYPTO_INSTALL_DIR})
     endif()
-  else(HAVE_GCRY_ERROR_T)
+  else()
     message(STATUS "libgcrypt seems to be too old")
     disable_plugin("gcrypt")
-  endif(HAVE_GCRY_ERROR_T)
-else(LIBGCRYPT_FOUND)
+  endif()
+else()
   disable_plugin("gcrypt")
-endif(LIBGCRYPT_FOUND)
+endif()

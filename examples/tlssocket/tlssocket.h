@@ -26,19 +26,20 @@
 
 class TLSSocket : public QTcpSocket
 {
+    Q_OBJECT
 public:
-	TLSSocket(QObject *parent = 0);
-	~TLSSocket();
+	TLSSocket(QObject *parent = nullptr);
+	~TLSSocket() override;
 
 	void connectToHostEncrypted(const QString &host, quint16 port);
 	QCA::TLS *tls();
 
-	bool waitForReadyRead(int msecs = -1);
+	bool waitForReadyRead(int msecs = -1) override;
 
 protected:
 	// from qiodevice
-	virtual qint64 readData(char *data, qint64 maxlen);
-	virtual qint64 writeData(const char *data, qint64 len);
+	qint64 readData(char *data, qint64 maxlen) override;
+	qint64 writeData(const char *data, qint64 len) override;
 
 private:
 	class Private;

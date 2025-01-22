@@ -173,7 +173,7 @@ public:
 
 	bool fromString(const QString &in)
 	{
-		QStringList parts = in.split(':');
+		const QStringList parts = in.split(':');
 		for(int n = 0; n < parts.count(); ++n)
 			parts[n] = unescape(parts[n]);
 
@@ -365,7 +365,7 @@ public:
 		return str;
 	}
 
-public slots:
+public Q_SLOTS:
 	void loader_finished()
 	{
 		QCA::KeyLoader *keyLoader = (QCA::KeyLoader *)sender();
@@ -662,7 +662,7 @@ public:
 	{
 	}
 
-public slots:
+public Q_SLOTS:
 	void loader_finished()
 	{
 		QCA::ConvertResult r = loader->convertResult();

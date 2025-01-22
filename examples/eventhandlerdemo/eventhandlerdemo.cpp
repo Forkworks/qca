@@ -37,20 +37,19 @@ class ClientPassphraseHandler: public QObject
 {
     Q_OBJECT
 public:
-    ClientPassphraseHandler(QObject *parent = 0) : QObject( parent )
+    ClientPassphraseHandler(QObject *parent = nullptr) : QObject( parent )
     {
         // When the PasswordAsker or TokenAsker needs to interact
         // with the user, it raises a signal. We connect that to a
         // local slot to get the required information.
-        connect( &m_handler, SIGNAL( eventReady(int, const QCA::Event &) ),
-                 SLOT( my_eventReady(int, const QCA::Event &) ) );
+        connect( &m_handler, &QCA::EventHandler::eventReady, this, &ClientPassphraseHandler::my_eventReady );
 
         // Now that we are set up, we can start the EventHandler. Nothing
         // will happen if you don't call this method.
         m_handler.start();
     }
 
-private slots:
+private Q_SLOTS:
     // This slot gets called when the provider needs a token inserted,
     // or to get a passphrase / password / PIN.
     void my_eventReady(int id, const QCA::Event &event)
@@ -112,7 +111,7 @@ class AskerThread : public QThread
 {
     Q_OBJECT
 protected:
-    virtual void run()
+    void run() override
     {
         asker_procedure();
     }
@@ -130,7 +129,7 @@ int main(int argc, char **argv)
 
     // handler and asker cannot occur in the same thread
     AskerThread askerThread;
-    QObject::connect(&askerThread, SIGNAL(finished()), &exampleApp, SLOT(quit()));
+    QObject::connect(&askerThread, &AskerThread::finished, &exampleApp, &QCoreApplication::quit);
     askerThread.start();
 
     exampleApp.exec();
@@ -141,7 +140,7 @@ void asker_procedure()
 {
     QCA::PasswordAsker pwAsker;
 
-    pwAsker.ask( QCA::Event::StylePassword, "foo.tmp",  0 );
+    pwAsker.ask( QCA::Event::StylePassword, QStringLiteral("foo.tmp"),  nullptr );
 
     pwAsker.waitForResponse();
 
@@ -151,7 +150,7 @@ void asker_procedure()
 
     QCA::TokenAsker tokenAsker;
 
-    tokenAsker.ask( QCA::KeyStoreInfo( QCA::KeyStore::SmartCard, "Token Id", "Token Name" ), QCA::KeyStoreEntry(), 0 );
+    tokenAsker.ask( QCA::KeyStoreInfo( QCA::KeyStore::SmartCard, QStringLiteral("Token Id"), QStringLiteral("Token Name") ), QCA::KeyStoreEntry(), nullptr );
 
     tokenAsker.waitForResponse();
 
