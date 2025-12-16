@@ -11,7 +11,7 @@ SET(CMAKE_SYSROOT     "/mnt/mainApp-orin" CACHE INTERNAL "" FORCE)
 SET(CMAKE_LIBRARY_ARCHITECTURE aarch64-linux-gnu)
 SET(CROSSCOMPILE TRUE)
 
-SET(COMPILER_ROOT /opt/sbox-sdk/toolchains/gcc-linaro-5.4.1-aarch64-linux-gnu/bin)
+SET(COMPILER_ROOT /opt/sbox-sdk/toolchains/gcc-linaro-7.5.0-aarch64-linux-gnu/bin)
 SET(CMAKE_C_COMPILER ${COMPILER_ROOT}/aarch64-linux-gnu-gcc)
 SET(CMAKE_CXX_COMPILER ${COMPILER_ROOT}/aarch64-linux-gnu-g++)
 
@@ -28,7 +28,7 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 #----------------------------------------------------
 # Linker Configuration 
 #----------------------------------------------------
-set(QT_PATH ${CMAKE_SYSROOT}/opt/sbox-sdk/QT5_1_10/)
+set(QT_PATH ${CMAKE_SYSROOT}/opt/sbox-sdk/QT5_10_1/)
 
 SET(CMAKE_PREFIX_PATH  ${QT_PATH})
 
